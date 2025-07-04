@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Katan-Konklave-Timer</title>
+  <title>Catan-Konklave-Timer</title>
   <style>
     body {
       font-family: "Garamond", serif;
@@ -52,7 +52,19 @@
       padding: 5px 8px;
       margin-bottom: 10px;
       border: 1px solid #7f8c8d;
-      border-radius: 5px;
+      border-radius: 8px;
+      appearance: none;
+      background: #fff;
+    }
+
+    select {
+      appearance: none;
+      background-color: #fff;
+      border: 1px solid #7f8c8d;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 16px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     #startGameBtn {
@@ -61,7 +73,7 @@
       background-color: #27ae60;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       margin-top: 15px;
@@ -69,6 +81,29 @@
 
     #startGameBtn:hover {
       background-color: #1e8449;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .settings-row label {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .settings-row input[type="text"] {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+      background: #fff;
     }
 
     #gameView {
@@ -172,7 +207,7 @@
   </style>
 </head>
 <body>
-  <h1>Katan-Konklave-Timer</h1>
+  <h1>Catan-Konklave-Timer</h1>
 
   <!-- Setup-Phase -->
   <div id="setupView">
@@ -188,12 +223,9 @@
 
     <div id="playerSettings"></div>
 
-    <div>
-      <label for="turnTimeInput">Zeit der Beratungen (MM:SS):</label><br>
+    <div class="settings-row">
+      <label for="turnTimeInput">Zeit der Beratungen (MM:SS):</label>
       <input type="text" id="turnTimeInput" value="01:30" placeholder="MM:SS" />
-    </div>
-
-    <div>
       <label for="startPlayer">Erster Kardinal am Tisch:</label>
       <select id="startPlayer"></select>
     </div>
