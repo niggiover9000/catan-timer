@@ -1,5 +1,5 @@
 services:
-  railquery:
+  catan-timer:
     image: niggiover9000/catan-timer:latest
     container_name: catan-timer
     restart: unless-stopped
