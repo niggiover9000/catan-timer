@@ -1,0 +1,7 @@
+services:
+  railquery:
+    image: niggiover9000/catan-timer:latest
+    container_name: catan-timer
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
