@@ -209,7 +209,89 @@
       font-size: 1.5em;
       margin-top: 50px;
     }
-  </style>
+
+    /* Modernes Design für Ergebnis-Tabelle */
+    .result-table {
+        margin: auto;
+        border-collapse: collapse;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        font-size: 1em;
+    }
+
+    .result-table th, .result-table td {
+        border: 1px solid #ddd;
+        padding: 10px 15px;
+        text-align: center;
+    }
+
+    .result-table th {
+        background-color: #27ae60;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .result-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .result-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Modernes Design für den "Neues Konklave starten"-Button */
+    #newGameBtn {
+        background-color: #27ae60; /* Grün wie Tabellenkopf */
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1em;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #newGameBtn:hover {
+        background-color: #219150; /* dunkleres Grün beim Hover */
+        transform: scale(1.05); /* leichter Zoom-Effekt */
+    }
+
+    /* Moderner Zeitpicker */
+    #timePicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+    }
+
+    #timePicker button {
+        background-color: #27ae60;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #timePicker button:hover {
+        background-color: #219150;
+        transform: scale(1.05);
+    }
+
+    #turnTimeInput {
+        width: 80px;
+        text-align: center;
+        font-size: 1.1em;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 5px;
+        background-color: #f9f9f9;
+    }
+</style>
 </head>
 <body>
   <h1>Catan-Konklave-Timer</h1>
@@ -229,11 +311,16 @@
     <div id="playerSettings"></div>
 
     <div class="settings-row">
-      <label for="turnTimeInput">Zeit der Beratungen (MM:SS):</label>
-      <input type="text" id="turnTimeInput" value="01:30" placeholder="MM:SS" />
-      <label for="startPlayer">Erster Kardinal am Tisch:</label>
-      <select id="startPlayer"></select>
+        <label for="turnTimeInput">Zeit der Beratungen (MM:SS):</label>
+        <div id="timePicker">
+            <button type="button" id="decreaseTime">-</button>
+            <input type="text" id="turnTimeInput" value="00:30" placeholder="MM:SS" readonly />
+            <button type="button" id="increaseTime">+</button>
+        </div>
+        <label for="startPlayer">Erster Kardinal am Tisch:</label>
+        <select id="startPlayer"></select>
     </div>
+
 
     <div id="bonusTimeOption">
       <input type="checkbox" id="bonusTime" />
@@ -257,7 +344,7 @@
   <div id="summaryView" class="hidden">
     <h2>Das heilige Konklave ist beendet.</h2>
     <p id="roundSummary"></p>
-    <button onclick="location.reload()">Neues Konklave starten</button>
+    <button id="newGameBtn" onclick="location.reload()">Neues Konklave starten</button>
   </div>
 
   <script>
@@ -353,10 +440,68 @@
     });
 
     document.getElementById("endGameBtn").addEventListener("click", () => {
-      clearInterval(timerInterval);
-      document.getElementById("gameView").classList.add("hidden");
-      document.getElementById("summaryView").classList.remove("hidden");
-      document.getElementById("roundSummary").textContent = `Es wurden ${roundCount} heilige Runden im Konklave vollzogen.`;
+        clearInterval(timerInterval);
+
+        // Game Over Sound abspielen (sofort, bevor UI wechselt)
+        const gameOverSound = document.getElementById("gameOverSound");
+        gameOverSound.currentTime = 0; // startet den Sound immer von Anfang
+        gameOverSound.play().catch((e) => {
+            console.warn("Sound konnte nicht abgespielt werden:", e);
+        });
+
+        // Übersichtstabelle erstellen
+        let summaryHTML = "";
+
+        if (bonusTimeEnabled) {
+            // Mit Restzeit-Spalte
+            summaryHTML += "<table class='result-table'>"
+                + "<tr><th>Züge</th>"
+                + "<th>Name</th>"
+                + "<th>Verbrauchte Zeit</th>"
+                + "<th>Verbleibende Zeit</th>"
+                + "<th>⌀ pro Zug</th></tr>";
+
+            players.forEach(player => {
+                let avgTime = player.totalTurns > 0
+                    ? Math.round(player.timeSpent / player.totalTurns)
+                    : 0;
+
+                summaryHTML += `<tr>
+                    <td>${player.totalTurns}</td>
+                    <td>${player.name}</td>
+                    <td>${formatSeconds(player.timeSpent)}</td>
+                    <td>${formatSeconds(player.timeLeft)}</td>
+                    <td>${formatSeconds(avgTime)}</td>
+                </tr>`;
+            });
+        } else {
+            // Ohne Restzeit-Spalte
+            summaryHTML += "<table class='result-table'>"
+                + "<tr><th>Züge</th>"
+                + "<th>Name</th>"
+                + "<th>Verbrauchte Zeit</th>"
+                + "<th>⌀ pro Zug</th></tr>";
+
+            players.forEach(player => {
+                let avgTime = player.totalTurns > 0
+                    ? Math.round(player.timeSpent / player.totalTurns)
+                    : 0;
+
+                summaryHTML += `<tr>
+                    <td>${player.totalTurns}</td>
+                    <td>${player.name}</td>
+                    <td>${formatSeconds(player.timeSpent)}</td>
+                    <td>${formatSeconds(avgTime)}</td>
+                </tr>`;
+            });
+        }
+
+        summaryHTML += "</table>";
+
+        document.getElementById("gameView").classList.add("hidden");
+        document.getElementById("summaryView").classList.remove("hidden");
+        document.getElementById("roundSummary").innerHTML =
+            `Es wurden ${roundCount} heilige Runden im Konklave vollzogen.<br><br>` + summaryHTML;
     });
 
     function saveSettings() {
@@ -364,9 +509,16 @@
       const playerCount = parseInt(document.getElementById("playerCount").value);
 
       for (let i = 1; i <= playerCount; i++) {
-        const name = document.getElementById(`playerName${i}`).value || `Kardinal ${i}`;
-        const color = document.getElementById(`playerColor${i}`).value;
-        players.push({ name, color, bonus: 0 });
+          const name = document.getElementById(`playerName${i}`).value || `Kardinal ${i}`;
+          const color = document.getElementById(`playerColor${i}`).value;
+          players.push({
+              name,
+              color,
+              bonus: 0,
+              totalTurns: 0,   // Anzahl der eigenen Züge
+              timeSpent: 0,    // Insgesamt verbrauchte Zeit
+              timeLeft: 0      // Insgesamt übrig gebliebene Zeit
+          });
       }
 
       turnTime = parseTimeString(document.getElementById("turnTimeInput").value);
@@ -385,21 +537,29 @@
     }
 
     function startPlayerTurn() {
-      clearInterval(timerInterval);
-      let baseTime = turnTime;
-      if (bonusTimeEnabled) {
-        baseTime += players[currentPlayerIndex].bonus;
-        players[currentPlayerIndex].bonus = 0;
-      }
-      remainingTime = baseTime;
-      updateGameView();
-      timerInterval = setInterval(tick, 1000);
+        clearInterval(timerInterval);
+        let baseTime = turnTime;
+        if (bonusTimeEnabled) {
+            baseTime += players[currentPlayerIndex].bonus;
+            players[currentPlayerIndex].bonus = 0;
+        }
+
+        // Anzahl der eigenen Züge hochzählen
+        players[currentPlayerIndex].totalTurns++;
+
+        remainingTime = baseTime;
+        updateGameView();
+        timerInterval = setInterval(tick, 1000);
     }
 
     function tick() {
       if (remainingTime <= 0) {
         nextPlayer();
       } else {
+        // Countdown-Sound abspielen bei den letzten 3 Sekunden
+        if (remainingTime <= 4 && remainingTime > 0) {
+          document.getElementById("countdownSound").play();
+        }
         remainingTime--;
         updateGameView();
       }
@@ -417,22 +577,64 @@
     }
 
     document.getElementById("nextBtn").addEventListener("click", () => {
-      if (bonusTimeEnabled && remainingTime > 0) {
-        players[currentPlayerIndex].bonus += remainingTime;
-      }
-      nextPlayer();
+        nextPlayer();
     });
 
     function nextPlayer() {
-      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-      if (currentPlayerIndex === 0) {
-        roundCount++;
-      }
-      startPlayerTurn();
+        // Zeitverbrauch berechnen
+        let player = players[currentPlayerIndex];
+        let usedTime = turnTime - remainingTime; // wirklich verbrauchte Zeit
+
+        if (bonusTimeEnabled && remainingTime > 0) {
+            player.bonus = remainingTime; // Bonuszeit für nächste Runde speichern
+            player.timeLeft += remainingTime; // Restzeit in Statistik speichern
+        } else {
+            player.bonus = 0; // keine Bonuszeit speichern
+        }
+
+        player.timeSpent += usedTime; // nur die tatsächlich verbrauchte Zeit addieren
+
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        if (currentPlayerIndex === 0) {
+            roundCount++;
+        }
+        startPlayerTurn();
+    }
+
+    // Hilfsfunktion: Sekunden in MM:SS umwandeln
+    function formatSeconds(seconds) {
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    }
+
+     // Zeitpicker Buttons
+    document.getElementById("increaseTime").addEventListener("click", () => {
+        adjustTime(5); // +10 Sekunden
+    });
+
+    document.getElementById("decreaseTime").addEventListener("click", () => {
+        adjustTime(-5); // -10 Sekunden
+    });
+
+    function adjustTime(seconds) {
+        let timeParts = document.getElementById("turnTimeInput").value.split(":");
+        let totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+        totalSeconds = Math.max(0, totalSeconds + seconds); // nicht unter 0 gehen
+        let minutes = Math.floor(totalSeconds / 60);
+        let secs = totalSeconds % 60;
+        document.getElementById("turnTimeInput").value =
+            `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
 
     // Initial Setup
     createPlayerFields(3);
-  </script>
+</script>
+<!-- Countdown-Sound fuer die letzten 3 Sekunden -->
+<audio id="countdownSound" src="countdown.mp3" preload="auto"></audio>
+
+<!-- Game Over Sound -->
+<audio id="gameOverSound" src="gameover.mp3" preload="auto"></audio>
+
 </body>
 </html>
